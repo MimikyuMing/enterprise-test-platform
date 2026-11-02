@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from sqlalchemy import text
 
 from app.db import SessionLocal
@@ -13,7 +13,7 @@ def health():
         db.execute(text("SELECT 1"))
         db_status = "ok"
     except Exception as e:
-        db_status = f"error: {e}"
+        raise HTTPException(status_code=503, detail=f"database error: {e}")
     finally:
         db.close()
     return {"status": "ok", "database": db_status}
