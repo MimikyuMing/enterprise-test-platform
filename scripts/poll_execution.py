@@ -6,7 +6,7 @@ BASE_URL = "http://127.0.0.1:8000"
 
 
 def poll_execution(execution_id: int, max_wait: int = 300) -> dict:
-    interval = 0.1
+    interval = 1
     max_interval = 30
     start = time.time()
     while True:
@@ -20,7 +20,7 @@ def poll_execution(execution_id: int, max_wait: int = 300) -> dict:
         if time.time() - start > max_wait:
             raise TimeoutError(f"execution {execution_id} 超过 {max_wait}s 未完成")
         time.sleep(interval)
-        # interval = min(interval * 2, max_interval)
+        interval = min(interval * 2, max_interval)
 
 
 if __name__ == "__main__":
