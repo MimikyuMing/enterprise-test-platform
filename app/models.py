@@ -14,7 +14,7 @@ class Execution(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     status: Mapped[str] = mapped_column(
         String(20), default="pending", server_default="pending", nullable=False
-    )
+    )# status: pending / running / success / failed / error
     total_cases: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     passed: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     failed: Mapped[int] = mapped_column(Integer, default=0, server_default="0")

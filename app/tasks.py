@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from app.celery_app import celery_app
 from app.db import SessionLocal
 from app.models import Execution
+from app.executor import get_executor
 
 
 @celery_app.task
@@ -18,18 +19,36 @@ def run_execution(execution_id: int):
         execution.started_at = datetime.now(timezone.utc)
         db.commit()
 
-        # 模拟执行：Day 4 会替换成真实测试执行
-        time.sleep(2)
-        total = execution.total_cases
-        passed = total
-        failed = 0
+        executor = get_executor()
+        result = executor.execute(execution.total_cases)
 
-        execution.status = "success"
-        execution.passed = passed
-        execution.failed = failed
+        if(result.error):
+            execution.status = "error"
+        elif result.failed > 0:
+            execution.status = "failed"
+        else:
+            execution.status = "success"
+
+        execution.total_cases = result.total
+        execution.passed = result.passed
+        execution.failed = result.failed
         execution.finished_at = datetime.now(timezone.utc)
         db.commit()
 
-        return {"execution_id": execution_id, "passed": passed, "failed": failed}
+        return {
+            "execution_id": execution_id,
+            "status": execution.status,
+            "total": result.total,
+            "passed": result.passed,
+            "failed": result.failed,
+            "error": result.error,
+        }
+    except Exception as e:
+        execution = db.get(Execution, execution_id)
+        if execution:
+            execution.status = "error"
+            execution.finished_at = datetime.now(timezone.utc)
+            db.commit()
+        raise
     finally:
         db.close()
