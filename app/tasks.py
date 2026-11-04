@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.celery_app import celery_app
 from app.db import SessionLocal
@@ -15,7 +15,7 @@ def run_execution(execution_id: int):
             return {"error": f"execution {execution_id} not found"}
 
         execution.status = "running"
-        execution.started_at = datetime.now()
+        execution.started_at = datetime.now(timezone.utc)
         db.commit()
 
         # 模拟执行：Day 4 会替换成真实测试执行
@@ -27,7 +27,7 @@ def run_execution(execution_id: int):
         execution.status = "success"
         execution.passed = passed
         execution.failed = failed
-        execution.finished_at = datetime.now()
+        execution.finished_at = datetime.now(timezone.utc)
         db.commit()
 
         return {"execution_id": execution_id, "passed": passed, "failed": failed}

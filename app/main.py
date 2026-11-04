@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Response
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -47,8 +47,10 @@ def create_execution(payload: ExecutionCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/executions/{execution_id}", response_model=ExecutionResponse)
-def get_execution(execution_id: int, db: Session = Depends(get_db)):
+def get_execution(execution_id: int, response: Response, db: Session = Depends(get_db)):
     execution = db.get(Execution, execution_id)
     if not execution:
         raise HTTPException(status_code=404, detail="execution not found")
+    if execution.status in ("pending", "running"):
+        response.headers["Retry-After"] = "2"
     return execution
