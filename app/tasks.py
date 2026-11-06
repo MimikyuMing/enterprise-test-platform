@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from app.celery_app import celery_app
 from app.db import SessionLocal
-from app.models import Execution
+from app.models import Execution, CaseResult
 from app.executor import get_executor
 
 
@@ -35,6 +35,24 @@ def run_execution(execution_id: int):
         execution.finished_at = datetime.now(timezone.utc)
         db.commit()
 
+        # insert case results
+        inserted = 0
+        if result.case_results:
+            case_rows = [
+                CaseResult(
+                    execution_id=execution_id,
+                    nodeid=cr.nodeid[:255],
+                    outcome=cr.outcome[:20],
+                    duration=cr.duration,
+                    message=cr.message,
+                )
+                for cr in result.case_results
+            ]
+            db.add_all(case_rows)
+            db.commit()
+            inserted = len(case_rows)
+
+
         return {
             "execution_id": execution_id,
             "status": execution.status,
@@ -42,6 +60,7 @@ def run_execution(execution_id: int):
             "passed": result.passed,
             "failed": result.failed,
             "error": result.error,
+            "case_results_inserted": inserted
         }
     except Exception as e:
         execution = db.get(Execution, execution_id)

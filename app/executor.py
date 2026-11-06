@@ -8,6 +8,14 @@ from dataclasses import dataclass
 
 
 @dataclass
+class CaseResultData:
+    nodeid: str
+    outcome: str
+    duration: float
+    message: str | None = None
+
+
+@dataclass
 class ExecutionResult:
     total: int
     passed: int
@@ -15,6 +23,7 @@ class ExecutionResult:
     duration_seconds: float
     output: str
     error: str | None = None
+    case_results: list[CaseResultData] | None = None
 
 
 class TestExecutor(ABC):
@@ -75,12 +84,14 @@ class SubprocessPytestExecutor(TestExecutor):
                 report = json.load(f)
 
             summary = report.get("summary", {})
+            case_results = _parse_case_results(report)
             return ExecutionResult(
                 total=summary.get("total", 0),
                 passed=summary.get("passed", 0),
                 failed=summary.get("failed", 0) + summary.get("error", 0),
                 duration_seconds=report.get("duration", 0.0),
                 output=output,
+                case_results=case_results,
             )
         except subprocess.TimeoutExpired:
             return ExecutionResult(
@@ -101,3 +112,31 @@ def get_executor() -> TestExecutor:
         python=os.getenv("PYTEST_PYTHON"),
         timeout=int(os.getenv("PYTEST_TIMEOUT", "300")),
     )
+
+
+# 解析Report的JSON
+def _extract_message(test: dict) -> str | None :
+    for phase in ("call", "setup", "teardown"):
+        phase_data = test.get(phase)
+        if isinstance(phase_data, dict):
+            longrepr = phase_data.get("longrepr")
+            if longrepr:
+                return str(longrepr)
+    return None
+
+
+def _parse_case_results(report: dict) -> list[CaseResultData]:
+    results = []
+    for test in report.get("tests", []):
+        nodeid = test.get("nodeid","")
+        if not nodeid:
+            continue
+        results.append(
+            CaseResultData(
+                nodeid=nodeid,
+                outcome=test.get("outcome", "unknown"),
+                duration=float(test.get("duration", 0.0)),
+                message=_extract_message(test),
+            )
+        )
+    return results
