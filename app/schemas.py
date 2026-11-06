@@ -17,4 +17,20 @@ class ExecutionResponse(BaseModel):
     started_at: datetime | None
     finished_at: datetime | None
 
+    model_config = {"from_attributes": True}\
+
+
+class CaseResultResponse(BaseModel):
+    id: int
+    nodeid: str
+    outcome: str
+    duration: float
+    message: str | None
+
     model_config = {"from_attributes": True}
+
+
+class CaseResultListResponse(BaseModel):
+    execution_id: int
+    total: int
+    items: list[CaseResultResponse]

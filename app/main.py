@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, HTTPException, Response, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -6,6 +6,8 @@ from app.db import SessionLocal, init_db
 from app.models import Execution
 from app.schemas import ExecutionCreate, ExecutionResponse
 from app.tasks import run_execution
+from app.models import CaseResult
+from app.schemas import CaseResultListResponse
 
 app = FastAPI(title="Enterprise Test Platform")
 
@@ -54,3 +56,28 @@ def get_execution(execution_id: int, response: Response, db: Session = Depends(g
     if execution.status in ("pending", "running"):
         response.headers["Retry-After"] = "2"
     return execution
+
+
+@app.get(
+    "/executions/{execution_id}/cases",
+    response_model=CaseResultListResponse,
+)
+def list_execution_cases(
+    execution_id: int,
+    outcome: str | None = Query(default=None, description="按结果过滤，如 failed"),
+    db: Session = Depends(get_db)
+):
+    execution = db.get(Execution, execution_id)
+    if not execution or execution.is_deleted:
+        raise HTTPException(status_code=404, detail="execution not found")
+    
+    query = db.query(CaseResult).filter(CaseResult.execution_id == execution_id)
+    if outcome:
+        query = query.filter(CaseResult.outcome == outcome)
+    rows = query.order_by(CaseResult.id).all()
+
+    return CaseResultListResponse(
+        execution_id=execution_id,
+        total=len(rows),
+        items=rows,
+    )
