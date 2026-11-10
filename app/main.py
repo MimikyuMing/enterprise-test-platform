@@ -8,11 +8,19 @@ from app.schemas import ExecutionCreate, ExecutionResponse
 from app.tasks import run_execution
 from app.models import CaseResult
 from app.schemas import CaseResultListResponse
+from app.metrics import metrics_app
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 app = FastAPI(title="Enterprise Test Platform")
 
-
 init_db()
+
+@app.get("/metrics")
+def metrics():
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST,
+    )
 
 
 def get_db():

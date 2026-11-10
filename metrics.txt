@@ -1,0 +1,37 @@
+# HELP python_gc_objects_collected_total Objects collected during gc
+# TYPE python_gc_objects_collected_total counter
+python_gc_objects_collected_total{generation="0"} 443.0
+python_gc_objects_collected_total{generation="1"} 68.0
+python_gc_objects_collected_total{generation="2"} 0.0
+# HELP python_gc_objects_uncollectable_total Uncollectable objects found during GC
+# TYPE python_gc_objects_uncollectable_total counter
+python_gc_objects_uncollectable_total{generation="0"} 0.0
+python_gc_objects_uncollectable_total{generation="1"} 0.0
+python_gc_objects_uncollectable_total{generation="2"} 0.0
+# HELP python_gc_collections_total Number of times this generation was collected
+# TYPE python_gc_collections_total counter
+python_gc_collections_total{generation="0"} 87.0
+python_gc_collections_total{generation="1"} 7.0
+python_gc_collections_total{generation="2"} 0.0
+# HELP python_info Python platform information
+# TYPE python_info gauge
+python_info{implementation="CPython",major="3",minor="14",patchlevel="7",version="3.14.7"} 1.0
+# HELP test_execution_total Total number of test executions
+# TYPE test_execution_total counter
+# HELP test_execution_duration_seconds Execution duration in seconds
+# TYPE test_execution_duration_seconds histogram
+test_execution_duration_seconds_bucket{le="1.0"} 0.0
+test_execution_duration_seconds_bucket{le="5.0"} 0.0
+test_execution_duration_seconds_bucket{le="10.0"} 0.0
+test_execution_duration_seconds_bucket{le="30.0"} 0.0
+test_execution_duration_seconds_bucket{le="60.0"} 0.0
+test_execution_duration_seconds_bucket{le="120.0"} 0.0
+test_execution_duration_seconds_bucket{le="300.0"} 0.0
+test_execution_duration_seconds_bucket{le="+Inf"} 0.0
+test_execution_duration_seconds_count 0.0
+test_execution_duration_seconds_sum 0.0
+# HELP test_execution_duration_seconds_created Execution duration in seconds
+# TYPE test_execution_duration_seconds_created gauge
+test_execution_duration_seconds_created 1.7942972802896867e+09
+# HELP test_case_total Total number of test case results
+# TYPE test_case_total counter

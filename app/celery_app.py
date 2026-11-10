@@ -1,4 +1,6 @@
 from celery import Celery
+from celery.signals import worker_ready
+from prometheus_client import start_http_server
 
 celery_app = Celery(
     "etp",
@@ -14,3 +16,8 @@ celery_app.conf.update(
     timezone="Asia/Shanghai",
     enable_utc=False,
 )
+
+
+@worker_ready.connect
+def start_metrics_server(**kwargs):
+    start_http_server(9100)

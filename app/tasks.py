@@ -5,11 +5,18 @@ from app.celery_app import celery_app
 from app.db import SessionLocal
 from app.models import Execution, CaseResult
 from app.executor import get_executor
+from app.metrics import (
+    test_case_total,
+    test_execution_duration_seconds,
+    test_execution_total,
+)
 
 
 @celery_app.task
 def run_execution(execution_id: int):
     db = SessionLocal()
+    start_time = time.monotonic()
+    final_status = "error"  # 兜底，异常时也会记一次
     try:
         execution = db.get(Execution, execution_id)
         if not execution:
@@ -22,20 +29,20 @@ def run_execution(execution_id: int):
         executor = get_executor()
         result = executor.execute(execution.total_cases)
 
-        if(result.error):
-            execution.status = "error"
+        if result.error:
+            final_status = "error"
         elif result.failed > 0:
-            execution.status = "failed"
+            final_status = "failed"
         else:
-            execution.status = "success"
+            final_status = "success"
 
+        execution.status = final_status
         execution.total_cases = result.total
         execution.passed = result.passed
         execution.failed = result.failed
         execution.finished_at = datetime.now(timezone.utc)
         db.commit()
 
-        # insert case results
         inserted = 0
         if result.case_results:
             case_rows = [
@@ -52,17 +59,19 @@ def run_execution(execution_id: int):
             db.commit()
             inserted = len(case_rows)
 
+            for cr in result.case_results:
+                test_case_total.labels(outcome=cr.outcome).inc()
 
         return {
             "execution_id": execution_id,
-            "status": execution.status,
+            "status": final_status,
             "total": result.total,
             "passed": result.passed,
             "failed": result.failed,
             "error": result.error,
-            "case_results_inserted": inserted
+            "case_results_inserted": inserted,
         }
-    except Exception as e:
+    except Exception:
         execution = db.get(Execution, execution_id)
         if execution:
             execution.status = "error"
@@ -70,4 +79,6 @@ def run_execution(execution_id: int):
             db.commit()
         raise
     finally:
+        test_execution_total.labels(status=final_status).inc()
+        test_execution_duration_seconds.observe(time.monotonic() - start_time)
         db.close()
