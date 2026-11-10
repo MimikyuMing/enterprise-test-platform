@@ -18,28 +18,32 @@ python_gc_collections_total{generation="2"} 0.0
 python_info{implementation="CPython",major="3",minor="14",patchlevel="7",version="3.14.7"} 1.0
 # HELP test_execution_total Total number of test executions
 # TYPE test_execution_total counter
-test_execution_total{status="success"} 1.0
+test_execution_total{status="success"} 3.0
+test_execution_total{status="failed"} 1.0
 # HELP test_execution_created Total number of test executions
 # TYPE test_execution_created gauge
-test_execution_created{status="success"} 1.7942977571563745e+09
+test_execution_created{status="success"} 1.7943009251479702e+09
+test_execution_created{status="failed"} 1.794302304002907e+09
 # HELP test_execution_duration_seconds Execution duration in seconds
 # TYPE test_execution_duration_seconds histogram
 test_execution_duration_seconds_bucket{le="1.0"} 0.0
 test_execution_duration_seconds_bucket{le="5.0"} 0.0
 test_execution_duration_seconds_bucket{le="10.0"} 0.0
-test_execution_duration_seconds_bucket{le="30.0"} 1.0
-test_execution_duration_seconds_bucket{le="60.0"} 1.0
-test_execution_duration_seconds_bucket{le="120.0"} 1.0
-test_execution_duration_seconds_bucket{le="300.0"} 1.0
-test_execution_duration_seconds_bucket{le="+Inf"} 1.0
-test_execution_duration_seconds_count 1.0
-test_execution_duration_seconds_sum 16.16012430000046
+test_execution_duration_seconds_bucket{le="30.0"} 4.0
+test_execution_duration_seconds_bucket{le="60.0"} 4.0
+test_execution_duration_seconds_bucket{le="120.0"} 4.0
+test_execution_duration_seconds_bucket{le="300.0"} 4.0
+test_execution_duration_seconds_bucket{le="+Inf"} 4.0
+test_execution_duration_seconds_count 4.0
+test_execution_duration_seconds_sum 58.02342559999852
 # HELP test_execution_duration_seconds_created Execution duration in seconds
 # TYPE test_execution_duration_seconds_created gauge
-test_execution_duration_seconds_created 1.794297601378795e+09
+test_execution_duration_seconds_created 1.7943008235504973e+09
 # HELP test_case_total Total number of test case results
 # TYPE test_case_total counter
-test_case_total{outcome="passed"} 22.0
+test_case_total{outcome="passed"} 88.0
+test_case_total{outcome="failed"} 1.0
 # HELP test_case_created Total number of test case results
 # TYPE test_case_created gauge
-test_case_created{outcome="passed"} 1.7942977571563048e+09
+test_case_created{outcome="passed"} 1.794300925147897e+09
+test_case_created{outcome="failed"} 1.7943023040028949e+09
