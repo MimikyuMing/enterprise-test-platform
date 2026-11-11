@@ -60,3 +60,86 @@ jobs:
         with:
           name: execution-id
           path: execution_id.txt
+
+      - name: Wait for execution result
+        env:
+          PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+          PLATFORM_API_KEY: ${{ secrets.PLATFORM_API_KEY }}
+        run: |
+          python - <<'EOF'
+          import json
+          import os
+          import sys
+          import time
+
+          import requests
+
+          base_url = os.environ.get("PLATFORM_URL", "").rstrip("/")
+          if not base_url:
+              raise SystemExit("PLATFORM_URL is empty. Check GitHub Secrets.")
+
+          headers = {
+              "ngrok-skip-browser-warning": "true",
+              "X-API-Key": os.environ.get("PLATFORM_API_KEY", ""),
+          }
+
+          with open("execution_id.txt") as f:
+              execution_id = int(f.read().strip())
+
+          print(f"Polling execution {execution_id} ...")
+
+          max_wait = 300
+          interval = 1
+          max_interval = 15
+          start = time.time()
+
+          while True:
+              try:
+                  resp = requests.get(
+                      f"{base_url}/executions/{execution_id}",
+                      headers=headers,
+                      timeout=30,
+                  )
+                  resp.raise_for_status()
+                  data = resp.json()
+              except requests.RequestException as e:
+                  print(f"[{int(time.time() - start)}s] request failed: {e}")
+                  time.sleep(interval)
+                  interval = min(interval * 2, max_interval)
+                  continue
+
+              status = data["status"]
+              elapsed = int(time.time() - start)
+              print(f"[{elapsed}s] status={status}")
+
+              if status in ("success", "failed", "error"):
+                  print(f"Final status: {status}")
+                  print(f"passed={data['passed']} failed={data['failed']}")
+
+                  if status != "success":
+                      try:
+                          cases_resp = requests.get(
+                              f"{base_url}/executions/{execution_id}/cases?outcome=failed",
+                              headers=headers,
+                              timeout=30,
+                          )
+                          cases_resp.raise_for_status()
+                          failed_cases = cases_resp.json().get("items", [])
+                          print(f"\nFailed cases ({len(failed_cases)}):")
+                          for c in failed_cases:
+                              print(f"  - {c['nodeid']}")
+                              if c.get("message"):
+                                  msg = c["message"].splitlines()[0][:200]
+                                  print(f"    {msg}")
+                      except requests.RequestException as e:
+                          print(f"Failed to fetch case details: {e}")
+
+                  sys.exit(0 if status == "success" else 1)
+
+              if time.time() - start > max_wait:
+                  print(f"Timeout after {max_wait}s, last status={status}")
+                  sys.exit(1)
+
+              time.sleep(interval)
+              interval = min(interval * 2, max_interval)
+          EOF
