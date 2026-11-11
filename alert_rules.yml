@@ -1,0 +1,20 @@
+groups:
+  - name: worker_health
+    rules:
+      - alert: WorkerDown
+        expr: up{job="worker"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Celery Worker 挂了"
+          description: "Worker target {{ $labels.instance }} 已经 DOWN 超过 1 分钟"
+          
+      - alert: ApiDown
+        expr: up{job="api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Api Worker 挂了"
+          description: "Api target {{ $labels.instance }} 已经 DOWN 超过 1 分钟"
