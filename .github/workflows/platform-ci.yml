@@ -1,0 +1,62 @@
+name: Platform CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  trigger-platform-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+            
+      - name: Install requests
+        run: pip install requests
+              
+      - name: Trigger platform execution
+        env: 
+          PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+          PLATFORM_API_KEY: ${{ secrets.PLATFORM_API_KEY }}
+        run: |
+          python - <<'EOF'
+          import os
+          import requests
+
+          base_url = os.environ["PLATFORM_URL"].rstrip("/")
+          headers = {
+              "Content-Type": "application/json",
+              "ngrok-skip-browser-warning": "true",
+              "X-API-Key": os.environ.get("PLATFORM_API_KEY", ""),
+          }
+
+          resp = requests.post(
+            f"{base_url}/executions",
+            json={"total_cases": 22} 
+          )
+
+          print(f"status_code={resp.status_code}")
+          print(f"body={resp.text}")
+          resp.raise_for_status()
+
+          data = resp.json()
+          execution_id = data["id"]
+          print(f"execution_id={execution_id}")
+
+          with open("execution_id.txt", "w") as f:
+              f.write(str(execution_id))
+          EOF
+              
+      - name: Upload execution_id
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-id
+          path: execution_id.txt
