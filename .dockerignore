@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.git/
+.github/
+notes/
+scripts/
+reports/
+metrics.txt
+worker_metrics.txt
+*.md

@@ -1,11 +1,13 @@
+import os
+
 from celery import Celery
 from celery.signals import worker_ready
 from prometheus_client import start_http_server
 
 celery_app = Celery(
     "etp",
-    broker="redis://localhost:6379/0",
-    backend="redis://localhost:6379/1",
+    broker=os.getenv("REDIS_URL", "redis://redis:6379/0"),
+    backend=os.getenv("REDIS_RESULT_URL", "redis://redis:6379/1"),
     include=["app.tasks"],
 )
 
